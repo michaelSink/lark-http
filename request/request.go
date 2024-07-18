@@ -23,6 +23,19 @@ type Request struct {
 	Header Header
 }
 
+func (request *Request) String() {
+  fmt.Printf("\n==============================")
+  fmt.Printf("\nMethod: %s", request.Method)
+	fmt.Printf("\nProto: HTTP %d.%d", request.ProtoMajor, request.ProtoMinor)
+	fmt.Printf("\nRequest URI: %s", request.RequestURI)
+	fmt.Printf("\nHost: %s", request.Host)
+  
+  for header, value := range request.Header {
+    fmt.Printf("\n%s: %s", header, value)
+  }
+  fmt.Printf("\n==============================")
+}
+
 func (request *Request) HydrateFromByteReader(reader *reader.ByteReader) error {
 	line, err := reader.ReadLine()
 	if err != nil {
@@ -47,7 +60,20 @@ func (request *Request) HydrateFromByteReader(reader *reader.ByteReader) error {
 		return err
 	}
 
-	return request.hydrateHeaderData(reader)
+  err = request.hydrateHeaderData(reader)
+  if err != nil {
+    return err
+  }
+
+  request.Host = request.URL.Host
+  if request.Host == "" {
+    host, ok := request.Header["Host"]
+    if ok {
+      request.Host = host
+    }
+  }
+
+  return nil
 }
 
 func parseHTTPMajorMinor(protocol string) (int, int, bool) {

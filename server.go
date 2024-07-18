@@ -4,7 +4,9 @@ import (
 	"fmt"
 	ByteReader "lark/reader"
 	"lark/request"
+	response "lark/response"
 	"net"
+	"os"
 	"strings"
 )
 
@@ -64,12 +66,13 @@ func (server *Server) Serve(listener net.Listener) error {
 
 func (server *Server) serveConnection(connection *net.Conn) {
 	defer (*connection).Close()
-
 	byteBuffer := make([]byte, 4069)
 
 	n, err := (*connection).Read(byteBuffer)
 	if err != nil {
+		(*connection).Write(response.BuildHttpResponse(response.INTERNAL_ERROR))
 		fmt.Print(err)
+		return
 	}
 
 	byteBuffer = byteBuffer[:n]
@@ -78,6 +81,8 @@ func (server *Server) serveConnection(connection *net.Conn) {
 
 	if cap(byteBuffer) == len(byteBuffer) {
 		fmt.Print("\nCapacity has been met\n")
+		(*connection).Write(response.BuildHttpResponse(response.BAD_REQUEST))
+		return
 	}
 
 	byteReader := ByteReader.ByteReader{
@@ -88,6 +93,18 @@ func (server *Server) serveConnection(connection *net.Conn) {
 	request := new(request.Request)
 
 	err = request.HydrateFromByteReader(&byteReader)
+	if err != nil {
+		(*connection).Write(response.BuildHttpResponse(response.BAD_REQUEST))
+		return
+	}
 
-	fmt.Printf("%+v\n", request)
+	request.String()
+
+	data, err := os.ReadFile("." + request.RequestURI)
+	if err != nil {
+		(*connection).Write(response.BuildHttpResponse(response.INTERNAL_ERROR))
+		return
+	}
+
+	(*connection).Write(response.BuildHttpResponseWithBody(data))
 }
