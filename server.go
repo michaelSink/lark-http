@@ -100,7 +100,7 @@ func (server *Server) serveConnection(connection *net.Conn) {
 
 	request.String()
 
-	data, err := os.ReadFile("." + request.RequestURI)
+	data, err := os.ReadFile("./public" + request.RequestURI)
 	if err != nil {
 		(*connection).Write(response.BuildHttpResponse(response.INTERNAL_ERROR))
 		return
