@@ -12,11 +12,13 @@ func (reader *ByteReader) ReadLine() (string, error) {
 		return "", io.EOF
 	}
 
+  byteBufferLength := len(reader.Buffer)
+
 	line := ""
-	for index := reader.Position; index < len(reader.Buffer); index++ {
+	for index := reader.Position; index < byteBufferLength; index++ {
 		currentByte := reader.Buffer[index]
 
-		if currentByte == 13 && index+1 < len(reader.Buffer) && reader.Buffer[index+1] == 10 {
+		if currentByte == 13 && index + 1 < byteBufferLength && reader.Buffer[index + 1] == 10 { 
 			reader.Position += 2
 			return line, nil
 		}
